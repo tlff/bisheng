@@ -265,3 +265,10 @@ sftp-config.json
 docker/data/*
 docker/mysql/data/*
 docker/office/bisheng/*.gz
+phplib
+.trae
+/bak
+src/backend/openapi.txt
+test-php-client
+AGENTS.md
+/openspec
