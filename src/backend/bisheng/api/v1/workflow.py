@@ -107,10 +107,15 @@ async def run_once(request: Request, login_user: UserPayload = Depends(get_login
 async def workflow_ws(*,
                       workflow_id: str,
                       websocket: WebSocket,
+                      t: Optional[str] = None,
                       chat_id: Optional[str] = None,
                       Authorize: AuthJWT = Depends()):
     try:
-        Authorize.jwt_required(auth_from='websocket', websocket=websocket)
+        if t:
+            Authorize.jwt_required(auth_from='websocket', token=t)
+            Authorize._token = t
+        else:
+            Authorize.jwt_required(auth_from='websocket', websocket=websocket)
         payload = Authorize.get_jwt_subject()
         payload = json.loads(payload)
         login_user = UserPayload(**payload)

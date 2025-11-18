@@ -248,7 +248,7 @@ async def genTitle(human: str, assistant: str, llm: BishengLLM, conversationId: 
     生成标题
     """
     convo = f'||>User:\n"{human}"\n ||>Response:\n"{assistant}"'
-    prompt = f'Please generate {titleInstruction} \n{convo} \n||>Title:'
+    prompt = f'Please generate {titleInstruction} \n{convo} \n 请根据对话的语言回答 \n ||>Title:'
     logger.info(f'convo: {convo}')
     res = await llm.ainvoke(prompt)
     title = res.content

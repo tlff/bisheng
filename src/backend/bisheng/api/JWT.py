@@ -15,5 +15,7 @@ class Settings(BaseModel):
     authjwt_token_location: List[str] = ['cookies', 'headers']
     # Disable CSRF Protection for this example. default is True
     authjwt_cookie_csrf_protect: bool = False
+    authjwt_cookie_domain: str = "localhost"
+    authjwt_cookie_samesite: str = 'lax'
 
 
