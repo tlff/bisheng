@@ -15,7 +15,7 @@ const app_env = {
 export default defineConfig({
   server: {
     host: '0.0.0.0',
-    port: 4001,
+    port: 4002,
     strictPort: false,
     proxy: {
       // '^/api/': {
@@ -24,7 +24,7 @@ export default defineConfig({
       //   changeOrigin: true,
       // },
       '^(/workspace)?/bisheng': {
-        target: "http://192.168.106.120:3002",
+        target: "http://192.168.18.201:4002",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => {
@@ -32,7 +32,7 @@ export default defineConfig({
         },
       },
       '/workspace/api': {
-        target: 'http://192.168.106.120:3002',
+        target: 'http://192.168.18.201:7861',
         changeOrigin: true,
         secure: false,
         ws: true,
