@@ -44,7 +44,7 @@ env:
   # dialog_quick_search: http://www.baidu.com/s?wd=
   # 当用户的环境前面的网关，不能在同一个端口上既有http又有socket时，需要这个配置，将两个请求区分开，默认可以不用
   # websocket_url: 192.168.106.120:3003
-  office_url: http://IP:8701 # onlyoffice 组件地址，需要浏览器能直接访问
+  office_url: http://192.168.18.201:8701 # onlyoffice 组件地址，需要浏览器能直接访问
   # 是否展示前端界面上的github和帮助链接
   show_github_and_help: true
   # 是否开启注册

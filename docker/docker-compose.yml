@@ -111,7 +111,8 @@ services:
 
   frontend:
     container_name: bisheng-frontend
-    image: dataelement/bisheng-frontend:v2.2.0-beta3
+    image: bisheng-frontend:tlf-v2.2.0-beta3
+    # image: dataelement/bisheng-frontend:v2.2.0-beta3
     ports:
       - "3001:3001"
     environment:
