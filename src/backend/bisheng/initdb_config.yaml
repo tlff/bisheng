@@ -54,9 +54,9 @@ env:
 
 workflow:
   # 节点运行最大步数
-  max_steps: 50
+  max_steps: 500
   # 等待用户输入的超时时间，单位分钟
-  timeout: 5
+  timeout: 60
 
 # 灵思模块相关配置
 linsight:
