@@ -218,12 +218,16 @@ class InputNode(BaseNode):
             file_ext = file_name.split('.')[-1].lower()
             if file_ext in self._image_ext:
                 image_files_path.append(file_path)
-
-            if file_content_length < file_content_max_size:
+            if file_content_max_size == 0:
                 file_content = "\n".join(texts)
-                file_content = file_content[:file_content_max_size - file_content_length]
-                file_content_length += len(file_content)
-                all_file_content += f"[file name]: {file_name}\n[file content begin]\n{file_content}\n[file content end]\n"
+            else:
+                if file_content_length < file_content_max_size:
+                    file_content = "\n".join(texts)
+                    file_content = file_content[
+                        : file_content_max_size - file_content_length
+                    ]
+            file_content_length += len(file_content)
+            all_file_content += f"[file name]: {file_name}\n[file content begin]\n{file_content}\n[file content end]\n"
 
             if not texts:
                 continue
@@ -240,7 +244,8 @@ class InputNode(BaseNode):
             # 上传到milvus和es
             logger.debug(f'workflow_add_vectordb file={key} file_name={file_name}')
             # 存入milvus
-            self._vector_client.add_texts(texts=texts, metadatas=metadatas)
+            if file_content_max_size > 0 and file_content_length > 0:
+                self._vector_client.add_texts(texts=texts, metadatas=metadatas)
 
             logger.debug(f'workflow_add_es file={key} file_name={file_name}')
             # 存入es
