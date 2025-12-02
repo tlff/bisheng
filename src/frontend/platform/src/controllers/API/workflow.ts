@@ -901,6 +901,47 @@ const workflowTemplate = [
         "v": "1",
         "group_params": []
     },
+    {
+        "id": "file_write_xxx",
+        "name": "文件写入",
+        "description": "将接受到的内容写入到文件中。",
+        "type": "file_write",
+        "v": "1",
+        "group_params": [
+            {
+                "name": "文件设置",
+                "params": [
+                    {
+                        "key": "file_path",
+                        "label": "文件路径",
+                        "type": "textarea",
+                        "required": true,
+                        "placeholder": "例如：/path/to/output.txt",
+                        "value": "",
+                        "description": "要写入的文件完整路径"
+                    },
+                    {
+                        "key": "content",
+                        "label": "文件内容",
+                        "type": "textarea",
+                        "required": true,
+                        "placeholder": "请输入要写入文件的内容",
+                        "value": "",
+                        "description": "要写入到文件中的内容"
+                    },
+                    {
+                        "key": "encoding",
+                        "label": "编码格式",
+                        "type": "input",
+                        "required": false,
+                        "placeholder": "utf-8",
+                        "value": "utf-8",
+                        "description": "文件编码格式，默认为utf-8"
+                    }
+                ]
+            }
+        ]
+    },
 ]
 
 const workflowTemplateEN = [
@@ -1624,5 +1665,46 @@ const workflowTemplateEN = [
         "description": "The workflow ends here.",
         "type": "end",
         "group_params": []
+    },
+    {
+        "id": "file_write_xxx",
+        "name": "File Write",
+        "description": "Write received content to a file.",
+        "type": "file_write",
+        "v": "1",
+        "group_params": [
+            {
+                "name": "File Settings",
+                "params": [
+                    {
+                        "key": "file_path",
+                        "label": "File Path",
+                        "type": "textarea",
+                        "required": true,
+                        "placeholder": "e.g., /path/to/output.txt",
+                        "value": "",
+                        "description": "The complete path of the file to write to"
+                    },
+                    {
+                        "key": "content",
+                        "label": "File Content",
+                        "type": "textarea",
+                        "required": true,
+                        "placeholder": "Please enter the content to write to the file",
+                        "value": "",
+                        "description": "The content to write to the file"
+                    },
+                    {
+                        "key": "encoding",
+                        "label": "Encoding",
+                        "type": "input",
+                        "required": false,
+                        "placeholder": "utf-8",
+                        "value": "utf-8",
+                        "description": "File encoding, default is utf-8"
+                    }
+                ]
+            }
+        ]
     }
 ];
