@@ -80,7 +80,8 @@ services:
   
   backend_worker:
     container_name: bisheng-backend-worker
-    image: dataelement/bisheng-backend:v2.2.0-beta3
+    # image: dataelement/bisheng-backend:v2.2.0-beta3
+    image: bisheng-backend:tlf-v2.2.0-beta3-1
     environment:
       TZ: Asia/Shanghai
       BS_MILVUS_CONNECTION_ARGS: '{"host":"milvus","port":"19530","user":"","password":"","secure":false}'
