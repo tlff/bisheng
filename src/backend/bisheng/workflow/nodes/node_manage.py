@@ -3,6 +3,7 @@ from bisheng.workflow.nodes.agent.agent import AgentNode
 from bisheng.workflow.nodes.code.code import CodeNode
 from bisheng.workflow.nodes.condition.condition import ConditionNode
 from bisheng.workflow.nodes.end.end import EndNode
+from bisheng.workflow.nodes.file_write.file_write import FileWriteNode
 from bisheng.workflow.nodes.input.input import InputNode
 from bisheng.workflow.nodes.llm.llm import LLMNode
 from bisheng.workflow.nodes.output.output import OutputNode
@@ -24,7 +25,8 @@ NODE_CLASS_MAP = {
     NodeType.CONDITION.value: ConditionNode,
     NodeType.AGENT.value: AgentNode,
     NodeType.CODE.value: CodeNode,
-    NodeType.LLM.value: LLMNode
+    NodeType.LLM.value: LLMNode,
+    NodeType.FILE_WRITE.value: FileWriteNode
 }
 
 
