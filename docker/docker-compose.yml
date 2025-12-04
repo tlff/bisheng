@@ -41,7 +41,7 @@ services:
   backend:
     container_name: bisheng-backend
     # image: dataelement/bisheng-backend:v2.2.0-beta3
-    image: bisheng-backend:tlf-v2.2.0-beta3
+    image: bisheng-backend:tlf-v2.2.0-beta3-2
     ports:
       - "7860:7860"
     environment:

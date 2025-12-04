@@ -3,7 +3,7 @@ FROM dataelement/bisheng-backend:base.v6
 WORKDIR /app
 
 COPY ./ ./
-
+RUN poetry config repositories.pypi https://pypi.tuna.tsinghua.edu.cn/simple
 RUN poetry config virtualenvs.create false
 RUN poetry update --without dev
 
