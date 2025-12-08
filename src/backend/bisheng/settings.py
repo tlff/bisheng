@@ -158,6 +158,8 @@ class Settings(BaseModel):
     bisheng_rt: dict = {}
     default_llm: dict = {}
     jwt_secret: str = 'secret'
+    jwt_cookie_domain: Optional[str] = Field(default=None, description='JWT cookie domain')
+    jwt_cookie_samesite: Optional[str] = Field(default=None, description='JWT cookie samesite')
     gpts: dict = {}
     openai_conf: dict = {}
     minio_conf: dict = {}
@@ -472,3 +474,6 @@ def decrypt_token(token: str):
 
 config_file = os.getenv('config', 'config.yaml')
 settings = load_settings_from_yaml(config_file)
+
+if __name__ == '__main__':
+    print(settings)
