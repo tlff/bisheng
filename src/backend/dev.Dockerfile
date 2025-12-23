@@ -1,0 +1,14 @@
+FROM bisheng-backend:tlf-v2.2.0-beta3
+
+WORKDIR /app
+
+COPY ./ ./
+# RUN poetry config repositories.pypi https://pypi.tuna.tsinghua.edu.cn/simple
+# RUN poetry config virtualenvs.create false
+# RUN poetry update --without dev
+
+# patch langchain-openai lib. remove this when langchain-openai support reasoning_content
+# RUN patch -p1 < /app/bisheng/patches/langchain_openai.patch /usr/local/lib/python3.10/site-packages/langchain_openai/chat_models/base.py
+
+
+CMD ["sh entrypoint.sh"]

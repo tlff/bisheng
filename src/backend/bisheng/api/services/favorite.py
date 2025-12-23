@@ -27,45 +27,21 @@ class FavoriteApiService:
 
     @staticmethod
     def create_favorite(
-        request: Request, login_user: UserPayload, resource_type: int, resource_id: str
+        request: Request, login_user: UserPayload, name: str, description: str
     ) -> Favorite:
         """创建收藏"""
         try:
-            # 检查是否已经收藏
-            existing_favorites = FavoriteResourceDao.get_favorites_by_resource(
-                resource_type, resource_id
-            )
-            user_favorite = None
-            for fav_resource in existing_favorites:
-                favorite = FavoriteDao.get_favorite(fav_resource.favorite_id)
-                if favorite and favorite.user_id == login_user.user_id:
-                    user_favorite = favorite
-                    break
-
-            if user_favorite:
-                raise FavoriteAlreadyExistsError()
-
             # 创建收藏记录
             favorite = Favorite(
                 user_id=login_user.user_id,
-                name=f"收藏_{resource_type}_{resource_id}",
-                description="",
-                resource_type=resource_type,
-                resource_id=resource_id,
+                is_default=0,
+                name=name,
+                description=description,
             )
             favorite = FavoriteDao.create_favorite(favorite)
 
-            # 创建收藏资源关联
-            favorite_resource = FavoriteResource(
-                favorite_id=favorite.id,
-                resource_type=resource_type,
-                resource_id=resource_id,
-            )
-            FavoriteResourceDao.add_resource(favorite_resource)
+           
 
-            logger.info(
-                f"用户 {login_user.user_id} 收藏了 {resource_type}:{resource_id}"
-            )
             return favorite
 
         except Exception as e:
@@ -118,25 +94,24 @@ class FavoriteApiService:
             raise FavoriteDeleteError(str(e))
 
     @staticmethod
-    def check_favorite(
+    def check_favorite_in_default(
         request: Request, login_user: UserPayload, resource_type: int, resource_id: str
     ) -> Dict[str, Any]:
         """检查是否已收藏"""
         try:
             # 查找用户对该资源的收藏
-            existing_favorites = FavoriteResourceDao.get_favorites_by_resource(
-                resource_type, resource_id
+            default_favorite = FavoriteDao.get_favorite_default(
+                login_user.user_id
             )
-            user_favorite = None
-            for fav_resource in existing_favorites:
-                favorite = FavoriteDao.get_favorite(fav_resource.favorite_id)
-                if favorite and favorite.user_id == login_user.user_id:
-                    user_favorite = favorite
-                    break
+            is_favorite = FavoriteResourceDao.check_resource_in_favorite(
+                default_favorite.id, resource_type, resource_id
+            )
 
             return {
-                "is_favorite": user_favorite is not None,
-                "favorite_id": user_favorite.id if user_favorite else None,
+                "is_favorite": is_favorite ,
+                "favorite_id": default_favorite.id if is_favorite else None,
+                "name": default_favorite.name,
+                "description": default_favorite.description,
             }
         except Exception as e:
             logger.error(f"检查收藏状态失败: {str(e)}")
@@ -437,3 +412,243 @@ class FavoriteApiService:
         except Exception as e:
             logger.error(f"从默认收藏夹删除资源失败: {str(e)}")
             raise FavoriteDeleteError(f"从默认收藏夹删除资源失败: {str(e)}")
+
+    @staticmethod
+    def update_favorite(
+        request: Request, login_user: UserPayload, favorite_id: int, name: Optional[str] = None, description: Optional[str] = None
+    ) -> Favorite:
+        """更新收藏"""
+        try:
+            # 获取收藏
+            favorite = FavoriteDao.get_favorite(favorite_id)
+            if not favorite:
+                raise FavoriteNotFoundError()
+
+            # 检查是否是用户自己的收藏
+            if favorite.user_id != login_user.user_id:
+                raise FavoriteNotFoundError()
+
+            # 更新收藏
+            updated_favorite = FavoriteDao.update_favorite(favorite_id, name, description)
+            if not updated_favorite:
+                raise FavoriteCreateError("更新收藏失败")
+
+            logger.info(f"用户 {login_user.user_id} 更新了收藏 {favorite_id}")
+            return updated_favorite
+
+        except Exception as e:
+            logger.error(f"更新收藏失败: {str(e)}")
+            if isinstance(e, (FavoriteNotFoundError, FavoriteCreateError)):
+                raise e
+            raise FavoriteCreateError(f"更新收藏失败: {str(e)}")
+
+    @staticmethod
+    def add_resource_to_favorite(
+        request: Request, login_user: UserPayload, favorite_id: int, resource_type: int, resource_id: str
+    ) -> Favorite:
+        """将资源添加到指定收藏夹"""
+        try:
+            # 检查收藏夹是否存在且属于当前用户
+            favorite = FavoriteDao.get_favorite(favorite_id)
+            if not favorite or favorite.user_id != login_user.user_id:
+                raise FavoriteNotFoundError()
+
+            # 检查资源是否已经在收藏夹中
+            if FavoriteResourceDao.check_resource_in_favorite(favorite_id, resource_type, resource_id):
+                raise FavoriteAlreadyExistsError()
+
+            # 添加资源到收藏夹
+            favorite_resource = FavoriteResource(
+                favorite_id=favorite_id,
+                resource_type=resource_type,
+                resource_id=resource_id,
+            )
+            FavoriteResourceDao.add_resource(favorite_resource)
+
+            logger.info(
+                f"用户 {login_user.user_id} 将资源 {resource_type}:{resource_id} 添加到收藏夹 {favorite_id}"
+            )
+            return favorite
+
+        except Exception as e:
+            logger.error(f"添加资源到收藏夹失败: {str(e)}")
+            if isinstance(e, (FavoriteNotFoundError, FavoriteAlreadyExistsError)):
+                raise e
+            raise FavoriteCreateError(f"添加资源到收藏夹失败: {str(e)}")
+
+    @staticmethod
+    def remove_resource_from_favorite(
+        request: Request, login_user: UserPayload, favorite_id: int, resource_type: int, resource_id: str
+    ) -> bool:
+        """从指定收藏夹中删除资源"""
+        try:
+            # 检查收藏夹是否存在且属于当前用户
+            favorite = FavoriteDao.get_favorite(favorite_id)
+            if not favorite or favorite.user_id != login_user.user_id:
+                raise FavoriteNotFoundError()
+
+            # 删除资源关联
+            success = FavoriteResourceDao.remove_resource(favorite_id, resource_type, resource_id)
+            if not success:
+                raise FavoriteResourceNotFoundError()
+
+            # 检查该收藏是否还有其他资源，如果没有则删除收藏记录
+            remaining_resources = FavoriteResourceDao.get_resources_by_favorite(
+                favorite_id
+            )
+            if not remaining_resources[0]:  # remaining_resources 是 (list, count) 元组
+                FavoriteDao.delete_favorite(favorite_id)
+                logger.info(f"收藏夹 {favorite_id} 已清空并删除")
+
+            logger.info(
+                f"用户 {login_user.user_id} 从收藏夹 {favorite_id} 删除了资源 {resource_type}:{resource_id}"
+            )
+            return True
+
+        except Exception as e:
+            logger.error(f"从收藏夹删除资源失败: {str(e)}")
+            if isinstance(e, (FavoriteNotFoundError, FavoriteResourceNotFoundError)):
+                raise e
+            raise FavoriteDeleteError(f"从收藏夹删除资源失败: {str(e)}")
+
+    @staticmethod
+    def get_favorite_resources(
+        request: Request, login_user: UserPayload, favorite_id: int, resource_type: Optional[str] = None, page: int = 1, limit: int = 10
+    ) -> Dict[str, Any]:
+        """获取指定收藏夹中的资源列表"""
+        try:
+            # 检查收藏夹是否存在且属于当前用户
+            favorite = FavoriteDao.get_favorite(favorite_id)
+            if not favorite or favorite.user_id != login_user.user_id:
+                raise FavoriteNotFoundError()
+
+            # 获取收藏夹中的资源
+            all_resources, total = FavoriteResourceDao.get_resources_by_favorite(favorite_id, resource_type, page, limit)
+
+            # 构建返回数据
+            resource_list = []
+            for resource in all_resources:
+                resource_data = {
+                    "id": resource.id,
+                    "favorite_name": favorite.name,
+                    "resource_type": resource.resource_type,
+                    "resource_id": resource.resource_id,
+                    "created_at": (resource.create_time if resource.create_time else None),
+                    "favorite_id": resource.favorite_id,
+                }
+
+                # 获取资源详情
+                try:
+                    resource_detail = FavoriteApiService.supplement_resource_info(resource)
+                    if resource_detail:
+                        resource_data["resource_detail"] = resource_detail
+                except Exception as detail_error:
+                    logger.warning(
+                        f"获取资源详情失败: {resource.resource_type}:{resource.resource_id}, 错误: {str(detail_error)}"
+                    )
+
+                resource_list.append(resource_data)
+
+            return {
+                "items": resource_list,
+                "total": total,
+                "page": page,
+                "limit": limit,
+                "total_pages": (total + limit - 1) // limit if limit > 0 else 1,
+                "favorite_info": {
+                    "id": favorite.id,
+                    "name": favorite.name,
+                    "description": favorite.description,
+                },
+            }
+
+        except Exception as e:
+            logger.error(f"获取收藏夹资源列表失败: {str(e)}")
+            if isinstance(e, FavoriteNotFoundError):
+                raise e
+            raise FavoriteListError(f"获取收藏夹资源列表失败: {str(e)}")
+
+    @staticmethod
+    def check_resource_in_favorite(
+        request: Request, login_user: UserPayload, favorite_id: int, resource_type: int, resource_id: str
+    ) -> Dict[str, Any]:
+        """检查资源是否在指定收藏夹中"""
+        try:
+            # 检查收藏夹是否存在且属于当前用户
+            favorite = FavoriteDao.get_favorite(favorite_id)
+            if not favorite or favorite.user_id != login_user.user_id:
+                raise FavoriteNotFoundError()
+
+            is_favorite = FavoriteResourceDao.check_resource_in_favorite(favorite_id, resource_type, resource_id)
+
+            return {
+                "is_favorite": is_favorite,
+                "favorite_id": favorite_id if is_favorite else None,
+                "name": favorite.name,
+                "description": favorite.description,
+            }
+        except Exception as e:
+            logger.error(f"检查收藏状态失败: {str(e)}")
+            if isinstance(e, FavoriteNotFoundError):
+                raise e
+            raise FavoriteCheckError(str(e))
+
+    @staticmethod
+    def delete_favorite_by_id(
+        request: Request, login_user: UserPayload, favorite_id: int
+    ) -> bool:
+        """删除整个收藏夹"""
+        try:
+            # 检查收藏夹是否存在且属于当前用户
+            favorite = FavoriteDao.get_favorite(favorite_id)
+            if not favorite or favorite.user_id != login_user.user_id:
+                raise FavoriteNotFoundError()
+
+            # 删除收藏夹及其所有资源
+            success = FavoriteDao.delete_favorite(favorite_id)
+            if not success:
+                raise FavoriteDeleteError()
+
+            logger.info(f"用户 {login_user.user_id} 删除了收藏夹 {favorite_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"删除收藏夹失败: {str(e)}")
+            if isinstance(e, (FavoriteNotFoundError, FavoriteDeleteError)):
+                raise e
+            raise FavoriteDeleteError(f"删除收藏夹失败: {str(e)}")
+
+    @staticmethod
+    def create_favorite_with_resource(
+        request: Request, login_user: UserPayload, name: str, description: str, resource_type: Optional[int] = None, resource_id: Optional[str] = None
+    ) -> Favorite:
+        """创建收藏夹并可选地添加资源"""
+        try:
+            # 创建收藏记录
+            favorite = Favorite(
+                user_id=login_user.user_id,
+                is_default=0,
+                name=name,
+                description=description,
+            )
+            favorite = FavoriteDao.create_favorite(favorite)
+
+            # 如果提供了资源信息，则添加到收藏夹
+            if resource_type is not None and resource_id is not None:
+                favorite_resource = FavoriteResource(
+                    favorite_id=favorite.id,
+                    resource_type=resource_type,
+                    resource_id=resource_id,
+                )
+                FavoriteResourceDao.add_resource(favorite_resource)
+                logger.info(f"用户 {login_user.user_id} 创建收藏夹 {favorite.id} 并添加了资源 {resource_type}:{resource_id}")
+            else:
+                logger.info(f"用户 {login_user.user_id} 创建了收藏夹 {favorite.id}")
+
+            return favorite
+
+        except Exception as e:
+            logger.error(f"创建收藏失败: {str(e)}")
+            if isinstance(e, FavoriteAlreadyExistsError):
+                raise e
+            raise FavoriteCreateError(str(e))
